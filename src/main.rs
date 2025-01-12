@@ -109,7 +109,7 @@ async fn main() -> std::io::Result<()> {
             .route("/update", web::put().to(update_item))
             .route("/delete", web::delete().to(delete_item))
     })
-    .bind("127.0.0.1:8080")? // Server binds on localhost and port 8080
+    .bind("127.0.0.1:8080")? 
     .run()
     .await
 }
