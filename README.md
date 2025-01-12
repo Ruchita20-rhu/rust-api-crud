@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Rust API with MongoDB CRUD Operations
 
 This project is a simple REST API built using **Actix-web** and **MongoDB**. The API allows you to perform CRUD operations (Create, Read, Update, Delete) on items stored in a MongoDB database. 
@@ -182,3 +183,7 @@ cd rust-api-crud
     ```
 
 
+=======
+# rust-api-crud
+A REST API server in Rust performing CRUD operations on MongoDB
+>>>>>>> 35b2b41738917e1e4ab5015189cc9185f1eb4a94
