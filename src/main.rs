@@ -1,3 +1,4 @@
+// Importing necessary dependencies for the Actix Web server and MongoDB interaction
 use actix_web::{web, App, HttpServer, Responder, HttpResponse};
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
@@ -6,16 +7,17 @@ use dotenv::dotenv;
 use std::env;
 use futures_util::stream::TryStreamExt;
 
-// Struct for handling item data
+// Item struct for handling item data
 #[derive(Serialize, Deserialize)]
 struct Item {
-    name: String,
-    description: String,
+    name: String,         
+    description: String,  
 }
 
+// DeleteRequest struct to handle incoming delete requests
 #[derive(Deserialize)]
 struct DeleteRequest {
-    name: String,
+    name: String,       
 }
 
 // Enum for API response
@@ -26,7 +28,9 @@ enum ApiResponse {
     InternalServerError(String),
 }
 
+
 impl ApiResponse {
+    // This function converts the ApiResponse enum into an actual HTTP response
     fn to_http_response(&self) -> HttpResponse {
         match self {
             ApiResponse::Success(msg) => HttpResponse::Ok().body(msg.clone()),
@@ -37,7 +41,7 @@ impl ApiResponse {
     }
 }
 
-// MongoDB connection and collection setup
+// This function connects to MongoDB using the URI defined in the .env file
 async fn connect_to_mongodb() -> mongodb::error::Result<Collection<Item>> {
     dotenv().ok();
     let db_uri = env::var("MONGO_URI").expect("MONGO_URI must be set in the .env file");
@@ -46,18 +50,19 @@ async fn connect_to_mongodb() -> mongodb::error::Result<Collection<Item>> {
     Ok(db.collection::<Item>("items")) // Collection name with type `Item`
 }
 
-// Create a new item (POST)
+// Function to create a new item (POST)
 async fn create_item(item: web::Json<Item>) -> impl Responder {
     let collection = connect_to_mongodb().await.unwrap();
     let new_item = item.into_inner();
 
+    // Trying to  insert the new item into the MongoDB collection
     match collection.insert_one(new_item, None).await {
         Ok(_) => ApiResponse::Created("Item created successfully".to_string()).to_http_response(),
         Err(_) => ApiResponse::InternalServerError("Failed to create item".to_string()).to_http_response(),
     }
 }
 
-// Read all items (GET)
+// Function to read all items (GET)
 async fn get_items() -> impl Responder {
     let collection = connect_to_mongodb().await.unwrap();
     let mut cursor = collection.find(None, None).await.unwrap();
@@ -70,10 +75,11 @@ async fn get_items() -> impl Responder {
     HttpResponse::Ok().json(items)
 }
 
-// Update an item (PUT)
+// Function to update an item (PUT)
 async fn update_item(item: web::Json<Item>) -> impl Responder {
     let collection = connect_to_mongodb().await.unwrap();
 
+    // Try updating the item in the collection by matching its name
     match collection.update_one(
         doc! { "name": &item.name },
         doc! { "$set": { "description": &item.description } },
@@ -85,10 +91,11 @@ async fn update_item(item: web::Json<Item>) -> impl Responder {
     }
 }
 
-// Delete an item (DELETE)
+// Function to delete an item (DELETE)
 async fn delete_item(item: web::Json<DeleteRequest>) -> impl Responder {
     let collection = connect_to_mongodb().await.unwrap();
 
+    // Try deleting the item based on its name
     match collection.delete_one(doc! { "name": &item.name }, None).await {
         Ok(result) if result.deleted_count > 0 => ApiResponse::Success("Item deleted successfully".to_string()).to_http_response(),
         Ok(_) => ApiResponse::NotFound("Item not found".to_string()).to_http_response(),
@@ -109,7 +116,8 @@ async fn main() -> std::io::Result<()> {
             .route("/update", web::put().to(update_item))
             .route("/delete", web::delete().to(delete_item))
     })
-    .bind("127.0.0.1:8080")? 
+    .bind("127.0.0.1:8080")? // Server binds on localhost and port 8080
     .run()
     .await
 }
+
